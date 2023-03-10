@@ -82,8 +82,8 @@
           alpha: 0.0,
         )),
         "bevy_hierarchy::components::children::Children": ([
-          Entity(generation: 0, index: 1),
-          Entity(generation: 0, index: 3),
+          1, 
+          3,
           ]),
       },
     ),
@@ -213,12 +213,12 @@
           linebreak_behaviour: WordBoundary
 
         ),*/
-        /*"bevy_ui::ui_node::CalculatedSize": (
+        "bevy_ui::ui_node::CalculatedSize": (
           size: (
-            x: Px(137.19511),
-            y: Px(10.0),
+            width: Px(137.19511),
+            height: Px(10.0),
           ),
-        ),*/
+        ),
         "bevy_ui::focus::FocusPolicy": Pass,
         "bevy_ui::ui_node::BackgroundColor": (Rgba(
           red: 0.5,
@@ -226,10 +226,7 @@
           blue: 0.5,
           alpha: 1.0,
         )),
-        "bevy_hierarchy::components::parent::Parent": (Entity(
-          generation: 0,
-          index: 0,
-        )),
+        "bevy_hierarchy::components::parent::Parent": (0),
       },
     ),
     // Right side - Content Pane
@@ -360,8 +357,14 @@
           ),
         ),
           */
+        "bevy_ui::ui_node::CalculatedSize": (
+          size: (
+            width: Px(0.0),
+            height: Px(0.0),
+          ),
+        ),
         "bevy_ui::focus::FocusPolicy": Pass,
-        "bevy_hierarchy::components::parent::Parent": (Entity(generation: 0, index:0)),
+        "bevy_hierarchy::components::parent::Parent": (0),
         /*
         "bevy_hierarchy::components::children::Children": ([
           (generation: 0, index: 3,),

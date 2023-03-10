@@ -15,12 +15,9 @@ opt-level = 1
 opt-level = 3
 
 [dependencies]
-# bevy = { version = "0.9", features = ["dynamic"] } # Revert dynamic feature before release
-bevy = { path = "../bevy" }
-bevy_editor_pls = "0.2.0"
-bevy_ninepatch = "0.9.1"
-bevy_rapier2d = "0.20.0"
-
-[target.x86_64-unknown-linux-gnu]
-linker = "clang"
-rustflags = ["-C", "link-arg=-fuse-ld=/usr/bin/mold"]
+bevy = { version = "0.10", features = ["dynamic_linking"] } # Revert dynamic feature before release
+serde = "1.0.152"
+# bevy = { path = "../bevy" }
+# bevy_editor_pls = "0.2.0"
+# bevy_ninepatch = "0.9.1"
+# bevy_rapier2d = "0.20.0"

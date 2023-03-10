@@ -1,13 +1,12 @@
 use std::collections::HashSet;
+use khaldron::{Cauldron, CauldronEvent, Ingredient};
 
 use bevy::{
     log::{Level, LogPlugin},
     prelude::*,
     window::{WindowResized, WindowResolution, PrimaryWindow},
+    input::{keyboard::KeyboardInput, ButtonState}
 };
-use bevy_editor_pls::prelude::*;
-use bevy_ninepatch::NinePatchPlugin;
-use bevy_rapier2d::prelude::*;
 
 const ASPECT_RATIO: (f32, f32) = (800.0, 450.0);
 
@@ -17,13 +16,6 @@ fn main() {
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
-                    /*window: WindowDescriptor {
-                        scale_factor_override: Some(2.),
-                        title: "Khaldron".to_string(),
-                        width: 1600.,
-                        height: 900.,
-                        ..Default::default()
-                    },*/
                     primary_window: Some(Window {
                         title: String::from("Khaldron"),
                         resolution: WindowResolution::new(1600.0, 900.0).with_scale_factor_override(2.),
@@ -41,39 +33,63 @@ fn main() {
                 })
                 .set(ImagePlugin::default_nearest()),
         )
-        // .add_plugin(EditorPlugin)
-        // .add_plugin(NinePatchPlugin::<()>::default())
+        .add_event::<CauldronEvent>()
         .add_startup_system(general_game_startup)
         .add_startup_system(game_startup)
         .add_startup_system(ui_setup_from_scene)
         .add_system(node_heirarchy_report)
         .add_system(scale_for_window)
+        .add_system(ingredient_game_input)
+        .add_system(ingredient_game)
         // .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(32.))
         .run();
 }
+
+
+fn ingredient_game_input(mut keyboard_event: EventReader<KeyboardInput>, mut cauldron_events: EventWriter<CauldronEvent>, ingredients: Query<(Entity, &Ingredient, &Name)>, cauldron: Query<Entity, With<Cauldron>>) {
+    for keyboard_event in keyboard_event.iter() {
+        if keyboard_event.state != ButtonState::Pressed || keyboard_event.key_code.is_none() {
+            continue;
+        }
+        println!("{:?} pressed", keyboard_event.key_code);
+        match keyboard_event.key_code.unwrap() {
+            KeyCode::A => {
+                for (entity, ingredient, name) in ingredients.iter() {
+                    println!("{} is a {:?} ingredient", name, ingredient.color );
+                }
+                if let Some(cauldron_entity) = cauldron.iter().next() {
+                    cauldron_events.send(CauldronEvent::StirCounterClockwise(cauldron_entity));
+                }
+            }
+            _ => {
+            }
+        }
+    }
+}
+
+fn ingredient_game(mut cauldron_events: EventReader<CauldronEvent>, cauldrons: Query<&mut Cauldron>, ingredients: Query<(&Ingredient, &Name)>) {
+    for cauldron_event in cauldron_events.iter() {
+        println!("{} {:?}", "---", cauldron_event);
+
+
+    }
+
+}
+
 
 fn general_game_startup(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
 }
 
-fn game_startup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let font = asset_server.load("fonts/FiraCode-Bold.ttf");
-    commands.spawn(Text2dBundle {
-        text: Text::from_section(
-            "Hello my bbs!\n\nI love you muchly!",
-            TextStyle {
-                color: Color::RED,
-                font_size: 30.0,
-                font,
-            },
-        )
-        .with_alignment(TextAlignment::Center),
-        ..Default::default()
-    });
+fn game_startup(mut commands: Commands) {
+    khaldron::add_default_ingredients(&mut commands);
+    commands.spawn(Cauldron::default());
 }
 
 fn ui_setup_from_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
     let scene: Handle<DynamicScene> = asset_server.load("ui/ui.scn.ron");
+    commands.spawn(Name::new("Extra Entity"));
+    commands.spawn(Name::new("Extra Entity 2"));
     commands
         .spawn(DynamicSceneBundle { scene, ..default() })
         .insert(NodeBundle {
