@@ -16,6 +16,7 @@ opt-level = 3
 
 [dependencies]
 bevy = { version = "0.10", features = ["dynamic_linking"] } # Revert dynamic feature before release
+itertools = "0.10.5"
 serde = "1.0.152"
 # bevy = { path = "../bevy" }
 # bevy_editor_pls = "0.2.0"

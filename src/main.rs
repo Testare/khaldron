@@ -1,11 +1,13 @@
-use std::collections::HashSet;
 use khaldron::{Cauldron, CauldronEvent, Ingredient};
+use std::collections::HashMap;
+use std::{collections::HashSet, time::Duration};
 
 use bevy::{
+    input::{keyboard::KeyboardInput, ButtonState},
     log::{Level, LogPlugin},
     prelude::*,
-    window::{WindowResized, WindowResolution, PrimaryWindow},
-    input::{keyboard::KeyboardInput, ButtonState}
+    time::common_conditions::on_timer,
+    window::{PrimaryWindow, WindowResized, WindowResolution},
 };
 
 const ASPECT_RATIO: (f32, f32) = (800.0, 450.0);
@@ -18,7 +20,8 @@ fn main() {
                 .set(WindowPlugin {
                     primary_window: Some(Window {
                         title: String::from("Khaldron"),
-                        resolution: WindowResolution::new(1600.0, 900.0).with_scale_factor_override(2.),
+                        resolution: WindowResolution::new(1600.0, 900.0)
+                            .with_scale_factor_override(2.),
                         ..default()
                     }),
                     ..Default::default()
@@ -40,42 +43,98 @@ fn main() {
         .add_system(node_heirarchy_report)
         .add_system(scale_for_window)
         .add_system(ingredient_game_input)
-        .add_system(ingredient_game)
+        .add_system(khaldron::evaluate_chemistry_rules)
+        .add_system(ingredient_game_report.run_if(on_timer(Duration::from_secs(3))))
         // .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(32.))
         .run();
 }
 
-
-fn ingredient_game_input(mut keyboard_event: EventReader<KeyboardInput>, mut cauldron_events: EventWriter<CauldronEvent>, ingredients: Query<(Entity, &Ingredient, &Name)>, cauldron: Query<Entity, With<Cauldron>>) {
+fn ingredient_game_input(
+    mut keyboard_event: EventReader<KeyboardInput>,
+    mut cauldron_events: EventWriter<CauldronEvent>,
+    ingredients: Query<(Entity, &Ingredient, &Name)>,
+    cauldron: Query<Entity, With<Cauldron>>,
+) {
     for keyboard_event in keyboard_event.iter() {
         if keyboard_event.state != ButtonState::Pressed || keyboard_event.key_code.is_none() {
             continue;
         }
-        println!("{:?} pressed", keyboard_event.key_code);
+        let ingredient_by_name: HashMap<&str, Entity> = ingredients
+            .iter()
+            .map(|(e, _, name)| (name.as_str(), e))
+            .collect();
+        // println!("{:?} pressed", keyboard_event.key_code);
         match keyboard_event.key_code.unwrap() {
             KeyCode::A => {
                 for (entity, ingredient, name) in ingredients.iter() {
-                    println!("{} is a {:?} ingredient", name, ingredient.color );
+                    println!("{} is a {:?} ingredient", name, ingredient.color);
                 }
+            }
+            KeyCode::S => {
+                if let Some(cauldron_entity) = cauldron.iter().next() {
+                    println!("+ Add 1L of Pepper");
+                    cauldron_events.send(CauldronEvent::Add {
+                        cauldron: cauldron_entity,
+                        ingredient: *ingredient_by_name.get("Pepper").unwrap(),
+                        liters: 1.0f32,
+                    });
+                }
+            }
+            KeyCode::D => {
+                if let Some(cauldron_entity) = cauldron.iter().next() {
+                    println!("+ Add 1L of Eye of Newt");
+                    cauldron_events.send(CauldronEvent::Add {
+                        cauldron: cauldron_entity,
+                        ingredient: *ingredient_by_name.get("Eye of Newt").unwrap(),
+                        liters: 1.0f32,
+                    });
+                }
+            }
+            KeyCode::F => {
+                if let Some(cauldron_entity) = cauldron.iter().next() {
+                    println!("+ Add 1L of A Rock");
+                    cauldron_events.send(CauldronEvent::Add {
+                        cauldron: cauldron_entity,
+                        ingredient: *ingredient_by_name.get("A Rock").unwrap(),
+                        liters: 1.0f32,
+                    });
+                }
+            }
+            KeyCode::R => {
+                println!("+ Stirring Counter Clockwise");
                 if let Some(cauldron_entity) = cauldron.iter().next() {
                     cauldron_events.send(CauldronEvent::StirCounterClockwise(cauldron_entity));
                 }
             }
-            _ => {
+            KeyCode::T => {
+                println!("+ Stirring Clockwise");
+                if let Some(cauldron_entity) = cauldron.iter().next() {
+                    cauldron_events.send(CauldronEvent::StirClockwise(cauldron_entity));
+                }
             }
+            _ => {}
         }
     }
 }
 
-fn ingredient_game(mut cauldron_events: EventReader<CauldronEvent>, cauldrons: Query<&mut Cauldron>, ingredients: Query<(&Ingredient, &Name)>) {
-    for cauldron_event in cauldron_events.iter() {
-        println!("{} {:?}", "---", cauldron_event);
-
-
+fn ingredient_game_report(
+    cauldrons: Query<(Entity, &Cauldron)>,
+    ingredients: Query<&Name, With<Ingredient>>,
+) {
+    for (id, cauldron) in cauldrons.iter() {
+        println!(
+            "--- Cauldron Report ---\n * Temperature: {:?}",
+            cauldron.temperature
+        );
+        for (ingredient_id, volume) in cauldron.ingredients.iter() {
+            println!(
+                " * {}L of {}",
+                volume,
+                ingredients.get(*ingredient_id).unwrap().as_str()
+            );
+        }
     }
-
 }
-
 
 fn general_game_startup(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
@@ -125,29 +184,37 @@ fn node_heirarchy_report(
     }
 }
 
-fn scale_for_window(mut windows: Query<(Entity, &mut Window), With<PrimaryWindow>>, mut resize_events: EventReader<WindowResized>) {
+fn scale_for_window(
+    mut windows: Query<(Entity, &mut Window), With<PrimaryWindow>>,
+    mut resize_events: EventReader<WindowResized>,
+) {
     // let window_ids: HashSet<WindowId> = resize_events.iter().map(|e| e.id).collect();
 
-    let resized_windows: HashSet<Entity> = resize_events.iter().map(|e| {
-        e.window
-    }).collect();
-    
+    let resized_windows: HashSet<Entity> = resize_events.iter().map(|e| e.window).collect();
+
     // for window_id in window_ids {
 
-        // TODO iter_many_mut?
-        // if let Some(window) = windows.get_mut(window_id) {
-        for (_, mut window) in windows.iter_mut().filter(|(e, _)|resized_windows.contains(e)) {
-            let (width, height) = (
-                window.physical_width() as f32,
-                window.physical_height() as f32,
-            );
-            let width_scaling = width / ASPECT_RATIO.0;
-            let height_scaling = height / ASPECT_RATIO.1;
-            if width_scaling <= height_scaling {
-                window.resolution.set_scale_factor_override(Some(width_scaling as f64));
-            } else {
-                window.resolution.set_scale_factor_override(Some(height_scaling as f64));
-            }
+    // TODO iter_many_mut?
+    // if let Some(window) = windows.get_mut(window_id) {
+    for (_, mut window) in windows
+        .iter_mut()
+        .filter(|(e, _)| resized_windows.contains(e))
+    {
+        let (width, height) = (
+            window.physical_width() as f32,
+            window.physical_height() as f32,
+        );
+        let width_scaling = width / ASPECT_RATIO.0;
+        let height_scaling = height / ASPECT_RATIO.1;
+        if width_scaling <= height_scaling {
+            window
+                .resolution
+                .set_scale_factor_override(Some(width_scaling as f64));
+        } else {
+            window
+                .resolution
+                .set_scale_factor_override(Some(height_scaling as f64));
         }
+    }
     // }
 }
