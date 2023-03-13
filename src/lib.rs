@@ -1,2 +1,2 @@
-mod chemistry;
-pub use chemistry::*;
+mod alchemy;
+pub use alchemy::*;

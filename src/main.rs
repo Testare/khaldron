@@ -66,7 +66,7 @@ fn ingredient_game_input(
         // println!("{:?} pressed", keyboard_event.key_code);
         match keyboard_event.key_code.unwrap() {
             KeyCode::A => {
-                for (entity, ingredient, name) in ingredients.iter() {
+                for (_entity, ingredient, name) in ingredients.iter() {
                     println!("{} is a {:?} ingredient", name, ingredient.color);
                 }
             }
@@ -121,7 +121,7 @@ fn ingredient_game_report(
     cauldrons: Query<(Entity, &Cauldron)>,
     ingredients: Query<&Name, With<Ingredient>>,
 ) {
-    for (id, cauldron) in cauldrons.iter() {
+    for (_id, cauldron) in cauldrons.iter() {
         println!(
             "--- Cauldron Report ---\n * Temperature: {:?}",
             cauldron.temperature
