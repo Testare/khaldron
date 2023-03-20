@@ -43,7 +43,8 @@ fn main() {
         .add_system(node_heirarchy_report)
         .add_system(scale_for_window)
         .add_system(ingredient_game_input)
-        .add_system(khaldron::evaluate_chemistry_rules)
+        .add_system(khaldron::adjust_cauldron_state)
+        .add_system(khaldron::evaluate_chemistry_rules::<Cauldron>) // TODO ensure adjust_cauldron_state happens first, perhaps make an alchemy plugin
         .add_system(ingredient_game_report.run_if(on_timer(Duration::from_secs(3))))
         // .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(32.))
         .run();

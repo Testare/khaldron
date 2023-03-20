@@ -12,7 +12,6 @@ impl Default for Temperature {
     }
 }
 
-
 impl Temperature {
     pub const ABSOLUTE_ZERO: Temperature = Temperature(0);
     pub const FREEZING: Temperature = Temperature(273);
@@ -37,6 +36,6 @@ impl Temperature {
     }
 
     fn aproximate_fahrenheit(&self) -> i16 {
-        ((self.0 as i16 - Self::KELVIN_TO_CELSIUS) * 9)/5 + 32
+        ((self.0 as i16 - Self::KELVIN_TO_CELSIUS) * 9) / 5 + 32
     }
 }
